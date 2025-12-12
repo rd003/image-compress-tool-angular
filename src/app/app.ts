@@ -50,10 +50,13 @@ import imageCompression, { Options } from 'browser-image-compression';
             <mat-list>
               @for(file of files();track file){
               <mat-list-item >
-                <mat-icon matListItemIcon>insert_drive_file</mat-icon>
-                 <img  href="getImagePreview(file)"/>
-                <div matListItemTitle>{{file.name}}</div>
-                <div matListItemLine>{{formatFileSize(file.size)}}</div>
+                <div class="img-detail">
+                    <div class="file-thumbnail">
+                      <img [src]="getImagePreview(file)"/>
+                    </div>
+                    <div class="file-name">{{file.name}}</div>
+                    <div class="file-size">{{formatFileSize(file.size)}}</div>
+                </div>
                 <button 
                   mat-icon-button 
                   matListItemMeta
@@ -69,8 +72,7 @@ import imageCompression, { Options } from 'browser-image-compression';
         @if(files().length > 0){
           <div class="actions">
             <button mat-raised-button color="primary" (click)="processFiles()">
-              <mat-icon>upload</mat-icon>
-              Process {{files().length}} file(s)
+              Compress {{files().length}} file(s)
             </button>
             <button mat-stroked-button (click)="clearFiles()">
               Clear All
@@ -81,27 +83,44 @@ import imageCompression, { Options } from 'browser-image-compression';
       @if(isProcessing()){
         <span>Processing {{files().length}} files...</span>
       }
-     <!-- Why compressed files are not being shown -->
+    
       @if(compressedFiles().length > 0){
           <div  class="file-list">
             <h3>Compressed Files ({{compressedFiles().length}})</h3>
             <mat-list>
               @for(file of compressedFiles();track file){
-              <mat-list-item >
-                <mat-icon matListItemIcon>insert_drive_file</mat-icon>
-                 <!-- <img class="file-thumbnail" [href]="file."/> -->
-                <div matListItemTitle>{{file.name}}</div>
-                <div matListItemLine>{{formatFileSize(file.size)}}</div>
-                <button 
-                  mat-icon-button 
-                  matListItemMeta
-                  (click)="removeCompressedFile($index)"
-                  color="warn">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </mat-list-item>
+                <mat-list-item >
+                  <div class="img-detail">
+                      <div class="file-thumbnail">
+                        <img [src]="getImagePreview(file)"/>
+                      </div>
+                      <div class="file-name">{{file.name}}</div>
+                      <div class="file-size">{{formatFileSize(file.size)}}</div>
+                      <button mat-raised-button color="secondary" (click)="downloadFile(file)">
+                        <mat-icon>download</mat-icon> Download
+                      </button>
+                  </div>
+                  <button 
+                    mat-icon-button 
+                    matListItemMeta
+                    (click)="removeCompressedFile($index)"
+                    color="warn">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </mat-list-item>
               }
             </mat-list>
+          </div>
+      }
+      @if(compressedFiles().length > 0){
+          <div class="actions">
+            <button mat-raised-button color="primary" (click)="({})">
+              <mat-icon>download</mat-icon>
+              Download All
+            </button>
+            <button mat-stroked-button (click)="clearCompressedFiles()">
+              Clear All
+            </button>
           </div>
       }
       </mat-card-content>
@@ -177,7 +196,7 @@ export class App {
   }
 
   clearCompressedFiles(): void {
-    this.files.set([]);
+    this.compressedFiles.set([]);
   }
 
   formatFileSize(bytes: number): string {
@@ -208,5 +227,15 @@ export class App {
     finally {
       this.isProcessing.set(false);
     }
+  }
+
+  downloadFile(file: File) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = file.name;
+    a.click();
+
+    setTimeout(() => URL.revokeObjectURL(url), 0)
   }
 }

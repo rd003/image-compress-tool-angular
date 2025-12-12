@@ -58,9 +58,20 @@
     color: #333;
 }
 
+
+
+.img-detail {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    border: 1px solid;
+
+}
+
 .file-thumbnail {
-    width: 56px;
-    height: 56px;
+    width: 66px;
+    height: 66px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -75,12 +86,14 @@
     object-fit: cover;
 }
 
-.file-thumbnail .file-icon {
-    font-size: 32px;
-    width: 32px;
-    height: 32px;
-    color: #666;
+mat-list-item {
+    margin-bottom: 0.5rem;
 }
+
+.file-name {
+    text-decoration: underline;
+}
+
 
 .actions {
     display: flex;

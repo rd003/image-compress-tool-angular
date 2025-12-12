@@ -1,9 +1,11 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatChipsModule } from '@angular/material/chips';
+import imageCompression, { Options } from 'browser-image-compression';
+
 @Component({
   selector: 'app-root',
   imports: [
@@ -42,13 +44,14 @@ import { MatChipsModule } from '@angular/material/chips';
             (change)="onFileSelected($event)"
             style="display: none">
         </div>
-        @if(files.length > 0){
+        @if(files().length > 0){
           <div  class="file-list">
-            <h3>Selected Files ({{files.length}})</h3>
+            <h3>Selected Files ({{files().length}})</h3>
             <mat-list>
-              @for(file of files;track file){
+              @for(file of files();track file){
               <mat-list-item >
                 <mat-icon matListItemIcon>insert_drive_file</mat-icon>
+                 <img  href="getImagePreview(file)"/>
                 <div matListItemTitle>{{file.name}}</div>
                 <div matListItemLine>{{formatFileSize(file.size)}}</div>
                 <button 
@@ -63,15 +66,42 @@ import { MatChipsModule } from '@angular/material/chips';
             </mat-list>
           </div>
       }
-        @if(files.length > 0){
+        @if(files().length > 0){
           <div class="actions">
-            <button mat-raised-button color="primary" (click)="uploadFiles()">
+            <button mat-raised-button color="primary" (click)="processFiles()">
               <mat-icon>upload</mat-icon>
-              Upload {{files.length}} file(s)
+              Process {{files().length}} file(s)
             </button>
             <button mat-stroked-button (click)="clearFiles()">
               Clear All
             </button>
+          </div>
+      }
+
+      @if(isProcessing()){
+        <span>Processing {{files().length}} files...</span>
+      }
+     <!-- Why compressed files are not being shown -->
+      @if(compressedFiles().length > 0){
+          <div  class="file-list">
+            <h3>Compressed Files ({{compressedFiles().length}})</h3>
+            <mat-list>
+              @for(file of compressedFiles();track file){
+              <mat-list-item >
+                <mat-icon matListItemIcon>insert_drive_file</mat-icon>
+                 <!-- <img class="file-thumbnail" [href]="file."/> -->
+                <div matListItemTitle>{{file.name}}</div>
+                <div matListItemLine>{{formatFileSize(file.size)}}</div>
+                <button 
+                  mat-icon-button 
+                  matListItemMeta
+                  (click)="removeCompressedFile($index)"
+                  color="warn">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </mat-list-item>
+              }
+            </mat-list>
           </div>
       }
       </mat-card-content>
@@ -80,8 +110,15 @@ import { MatChipsModule } from '@angular/material/chips';
   styleUrl: 'app.css',
 })
 export class App {
-  files: File[] = [];
+  files = signal<File[]>([]);
+  compressedFiles = signal<File[]>([]);
+  isProcessing = signal(false);
   isDragging = false;
+
+  options: Options = {
+    maxSizeMB: 1,
+    useWebWorker: true,
+  }
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -115,15 +152,32 @@ export class App {
   }
 
   addFiles(newFiles: File[]): void {
-    this.files = [...this.files, ...newFiles];
+    this.files.update(current => [...current, ...newFiles]);
   }
 
   removeFile(index: number): void {
-    this.files.splice(index, 1);
+    this.files.update(current => {
+      const updated = [...current];
+      updated.splice(index, 1);
+      return updated;
+    });
+  }
+
+  removeCompressedFile(index: number): void {
+    this.compressedFiles.update(current => {
+      const updated = [...current];
+      updated.splice(index, 1);
+      return updated;
+    });
   }
 
   clearFiles(): void {
-    this.files = [];
+    this.files.set([]);
+    this.clearCompressedFiles();
+  }
+
+  clearCompressedFiles(): void {
+    this.files.set([]);
   }
 
   formatFileSize(bytes: number): string {
@@ -134,16 +188,25 @@ export class App {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
 
-  uploadFiles(): void {
-    // Implement your upload logic here
-    console.log('Uploading files:', this.files);
+  getImagePreview(file: File) {
+    return URL.createObjectURL(file);
+  }
 
-    // Example: Using FormData for HTTP upload
-    const formData = new FormData();
-    this.files.forEach((file, index) => {
-      formData.append(`file${index}`, file);
-    });
-
-    alert(`Ready to upload ${this.files.length} file(s)`);
+  async processFiles() {
+    if (this.isProcessing()) return;
+    try {
+      this.isProcessing.set(true);
+      const compressionPromises = this.files().map(async (imageFile) => {
+        const compressedFile = await imageCompression(imageFile, this.options);
+        return compressedFile;
+      });
+      const compressed: File[] = await Promise.all(compressionPromises);
+      this.compressedFiles.set(compressed);
+    } catch (error) {
+      console.log(error);
+    }
+    finally {
+      this.isProcessing.set(false);
+    }
   }
 }

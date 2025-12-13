@@ -64,6 +64,22 @@ export class App {
   }
 
   addFiles(newFiles: File[]): void {
+    console.log(newFiles);
+
+    // validate file type. Only images are
+    const containsNonImages = newFiles.some(file => !file.type.startsWith('image/'));
+    if (containsNonImages) {
+      alert("Rejected: Some of the files are not image");
+      return;
+    }
+
+    // validate file size
+    const hasOversizeFiles = newFiles.some(file => file.size > 10 * 1024 * 1024);
+    if (hasOversizeFiles) {
+      alert("Rejected: Some of the files exceeds 10MB");
+      return;
+    }
+
     this.files.update(current => [...current, ...newFiles]);
   }
 

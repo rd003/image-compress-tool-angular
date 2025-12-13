@@ -7,10 +7,12 @@ import { MatChipsModule } from '@angular/material/chips';
 import imageCompression, { Options } from 'browser-image-compression';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import JSZip from 'jszip';
+import { MatSliderModule } from '@angular/material/slider';
 
 @Component({
   selector: 'app-root',
   imports: [
+    MatSliderModule,
     MatCardModule,
     MatButtonModule,
     MatIconModule,
@@ -26,10 +28,17 @@ export class App {
   isProcessing = signal(false);
   isDragging = false;
   sanitize = inject(DomSanitizer);
+  maxSizeMb = signal<number>(1);
+  initialQuality = signal<number>(80);
 
   options: Options = {
-    maxSizeMB: 1,
+    maxSizeMB: this.maxSizeMb(),
     useWebWorker: true,
+    initialQuality: this.initialQuality() / 100
+  }
+
+  formatLabel(value: number): string {
+    return `${value}%`;
   }
 
   onDragOver(event: DragEvent): void {

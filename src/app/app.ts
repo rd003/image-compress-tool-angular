@@ -1,10 +1,12 @@
-import { Component, signal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatChipsModule } from '@angular/material/chips';
 import imageCompression, { Options } from 'browser-image-compression';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import JSZip from 'jszip';
 
 @Component({
   selector: 'app-root',
@@ -15,117 +17,7 @@ import imageCompression, { Options } from 'browser-image-compression';
     MatListModule,
     MatChipsModule
   ],
-  template: `
-  <mat-card class="upload-card">
-      <mat-card-header>
-        <mat-card-title>File Upload</mat-card-title>
-      </mat-card-header>
-      
-      <mat-card-content>
-        <div 
-          class="drop-zone"
-          [class.dragover]="isDragging"
-          (dragover)="onDragOver($event)"
-          (dragleave)="onDragLeave($event)"
-          (drop)="onDrop($event)"
-          (click)="fileInput.click()">
-          
-          <mat-icon class="upload-icon">cloud_upload</mat-icon>
-          <p class="drop-text">
-            Drag & drop files here or <span class="browse-link">browse</span>
-          </p>
-          <p class="file-info">Supports multiple files</p>
-          
-          <input 
-            #fileInput
-            type="file" 
-            multiple 
-            accept="image/*"
-            (change)="onFileSelected($event)"
-            style="display: none">
-        </div>
-        @if(files().length > 0){
-          <div  class="file-list">
-            <h3>Selected Files ({{files().length}})</h3>
-            <mat-list>
-              @for(file of files();track file){
-              <mat-list-item >
-                <div class="img-detail">
-                    <div class="file-thumbnail">
-                      <img [src]="getImagePreview(file)"/>
-                    </div>
-                    <div class="file-name">{{file.name}}</div>
-                    <div class="file-size">{{formatFileSize(file.size)}}</div>
-                </div>
-                <button 
-                  mat-icon-button 
-                  matListItemMeta
-                  (click)="removeFile($index)"
-                  color="warn">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </mat-list-item>
-              }
-            </mat-list>
-          </div>
-      }
-        @if(files().length > 0){
-          <div class="actions">
-            <button mat-raised-button color="primary" (click)="processFiles()">
-              Compress {{files().length}} file(s)
-            </button>
-            <button mat-stroked-button (click)="clearFiles()">
-              Clear All
-            </button>
-          </div>
-      }
-
-      @if(isProcessing()){
-        <span>Processing {{files().length}} files...</span>
-      }
-    
-      @if(compressedFiles().length > 0){
-          <div  class="file-list">
-            <h3>Compressed Files ({{compressedFiles().length}})</h3>
-            <mat-list>
-              @for(file of compressedFiles();track file){
-                <mat-list-item >
-                  <div class="img-detail">
-                      <div class="file-thumbnail">
-                        <img [src]="getImagePreview(file)"/>
-                      </div>
-                      <div class="file-name">{{file.name}}</div>
-                      <div class="file-size">{{formatFileSize(file.size)}}</div>
-                      <button mat-raised-button color="secondary" (click)="downloadFile(file)">
-                        <mat-icon>download</mat-icon> Download
-                      </button>
-                  </div>
-                  <button 
-                    mat-icon-button 
-                    matListItemMeta
-                    (click)="removeCompressedFile($index)"
-                    color="warn">
-                    <mat-icon>close</mat-icon>
-                  </button>
-                </mat-list-item>
-              }
-            </mat-list>
-          </div>
-      }
-      @if(compressedFiles().length > 0){
-          <div class="actions">
-            <button mat-raised-button color="primary" (click)="({})">
-              <mat-icon>download</mat-icon>
-              Download All
-            </button>
-            <button mat-stroked-button (click)="clearCompressedFiles()">
-              Clear All
-            </button>
-          </div>
-      }
-      </mat-card-content>
-    </mat-card>
-  `,
+  templateUrl: './app.html',
   styleUrl: 'app.css',
 })
 export class App {
@@ -133,6 +25,7 @@ export class App {
   compressedFiles = signal<File[]>([]);
   isProcessing = signal(false);
   isDragging = false;
+  sanitize = inject(DomSanitizer);
 
   options: Options = {
     maxSizeMB: 1,
@@ -207,8 +100,8 @@ export class App {
     return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
   }
 
-  getImagePreview(file: File) {
-    return URL.createObjectURL(file);
+  getImagePreview(file: File): SafeUrl {
+    return this.sanitize.bypassSecurityTrustUrl(URL.createObjectURL(file));
   }
 
   async processFiles() {
@@ -237,5 +130,28 @@ export class App {
     a.click();
 
     setTimeout(() => URL.revokeObjectURL(url), 0)
+  }
+
+  async downloadAll() {
+    if (this.compressedFiles().length === 0) return;
+    try {
+      const zip = new JSZip();
+      this.compressedFiles().forEach((file, index) => {
+        zip.file(file.name, file);
+      });
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+      // Download the zip
+      const url = URL.createObjectURL(zipBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'compressed-images.zip';
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 0);
+    }
+    catch (ex) {
+      console.log(ex);
+    }
+
   }
 }

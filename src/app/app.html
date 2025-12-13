@@ -1,0 +1,91 @@
+<mat-card class="upload-card">
+    <mat-card-header>
+        <mat-card-title>File Upload</mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+        <div class="drop-zone" [class.dragover]="isDragging" (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)" (drop)="onDrop($event)" (click)="fileInput.click()">
+
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <p class="drop-text">
+                Drag & drop files here or <span class="browse-link">browse</span>
+            </p>
+            <p class="file-info">Supports multiple files</p>
+
+            <input #fileInput type="file" multiple accept="image/*" (change)="onFileSelected($event)"
+                style="display: none">
+        </div>
+        @if(files().length > 0){
+        <div class="file-list">
+            <h3>Selected Files ({{files().length}})</h3>
+            <mat-list>
+                @for(file of files();track file){
+                <mat-list-item>
+                    <div class="img-detail">
+                        <div class="file-thumbnail">
+                            <img [src]="getImagePreview(file)" />
+                        </div>
+                        <div class="file-name">{{file.name}}</div>
+                        <div class="file-size">{{formatFileSize(file.size)}}</div>
+                    </div>
+                    <button mat-icon-button matListItemMeta (click)="removeFile($index)" color="warn">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </mat-list-item>
+                }
+            </mat-list>
+        </div>
+        }
+        @if(files().length > 0){
+        <div class="actions">
+            <button mat-raised-button color="primary" (click)="processFiles()">
+                Compress {{files().length}} file(s)
+            </button>
+            <button mat-stroked-button (click)="clearFiles()">
+                Clear All
+            </button>
+        </div>
+        }
+
+        @if(isProcessing()){
+        <span>Processing {{files().length}} files...</span>
+        }
+
+        @if(compressedFiles().length > 0){
+        <div class="file-list">
+            <h3>Compressed Files ({{compressedFiles().length}})</h3>
+            <mat-list>
+                @for(file of compressedFiles();track file){
+                <mat-list-item>
+                    <div class="img-detail">
+                        <div class="file-thumbnail">
+                            <img [src]="getImagePreview(file)" />
+                        </div>
+                        <div class="file-name">{{file.name}}</div>
+                        <div class="file-size">{{formatFileSize(file.size)}}</div>
+                        <button mat-raised-button color="secondary" (click)="downloadFile(file)">
+                            <mat-icon>download</mat-icon> Download
+                        </button>
+                    </div>
+                    <button mat-icon-button matListItemMeta (click)="removeCompressedFile($index)" color="warn">
+                        <mat-icon>close</mat-icon>
+                    </button>
+                </mat-list-item>
+                }
+            </mat-list>
+        </div>
+        }
+        @if(compressedFiles().length > 0){
+        <div class="actions">
+            <button mat-raised-button color="primary" (click)="downloadAll()">
+                <mat-icon>download</mat-icon>
+                Download All
+            </button>
+            <button mat-stroked-button (click)="clearCompressedFiles()">
+                Clear All
+            </button>
+        </div>
+        }
+    </mat-card-content>
+</mat-card>

@@ -31,12 +31,6 @@ export class App {
   maxSizeMb = signal<number>(1);
   initialQuality = signal<number>(80);
 
-  options: Options = {
-    maxSizeMB: this.maxSizeMb(),
-    useWebWorker: true,
-    initialQuality: this.initialQuality() / 100
-  }
-
   formatLabel(value: number): string {
     return `${value}%`;
   }
@@ -133,8 +127,13 @@ export class App {
     if (this.isProcessing()) return;
     try {
       this.isProcessing.set(true);
+      const options: Options = {
+        maxSizeMB: this.maxSizeMb(),
+        useWebWorker: true,
+        initialQuality: this.initialQuality() / 100
+      }
       const compressionPromises = this.files().map(async (imageFile) => {
-        const compressedFile = await imageCompression(imageFile, this.options);
+        const compressedFile = await imageCompression(imageFile, options);
         return compressedFile;
       });
       const compressed: File[] = await Promise.all(compressionPromises);

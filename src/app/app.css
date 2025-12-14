@@ -16,8 +16,10 @@
 /* .setting {} */
 
 .upload-card {
-    width: 600px;
+    width: calc(100vw - 1rem);
+    max-width: 600px;
     margin: 1rem auto;
+    padding: 0;
 }
 
 .drop-zone {
@@ -128,4 +130,11 @@ mat-list-item {
 
 .actions button {
     min-width: 120px;
+}
+
+/* Optional: adjust padding for very small screens */
+@media (max-width: 640px) {
+    .upload-card {
+        margin: 1rem 0;
+    }
 }

@@ -8,7 +8,7 @@ import imageCompression, { Options } from 'browser-image-compression';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import JSZip from 'jszip';
 import { MatSliderModule } from '@angular/material/slider';
-import { Footer } from "./footer";
+import { Footer } from './footer';
 
 @Component({
   selector: 'app-root',
@@ -19,7 +19,7 @@ import { Footer } from "./footer";
     MatIconModule,
     MatListModule,
     MatChipsModule,
-    Footer
+    Footer,
   ],
   templateUrl: './app.html',
   styleUrl: 'app.css',
@@ -72,24 +72,24 @@ export class App {
     console.log(newFiles);
 
     // validate file type. Only images are
-    const containsNonImages = newFiles.some(file => !file.type.startsWith('image/'));
+    const containsNonImages = newFiles.some((file) => !file.type.startsWith('image/'));
     if (containsNonImages) {
-      alert("Rejected: Some of the files are not image");
+      alert('Rejected: Some of the files are not image');
       return;
     }
 
     // validate file size
-    const hasOversizeFiles = newFiles.some(file => file.size > 10 * 1024 * 1024);
+    const hasOversizeFiles = newFiles.some((file) => file.size > 10 * 1024 * 1024);
     if (hasOversizeFiles) {
-      alert("Rejected: Some of the files exceeds 10MB");
+      alert('Rejected: Some of the files exceeds 10MB');
       return;
     }
 
-    this.files.update(current => [...current, ...newFiles]);
+    this.files.update((current) => [...current, ...newFiles]);
   }
 
   removeFile(index: number): void {
-    this.files.update(current => {
+    this.files.update((current) => {
       const updated = [...current];
       updated.splice(index, 1);
       return updated;
@@ -97,7 +97,7 @@ export class App {
   }
 
   removeCompressedFile(index: number): void {
-    this.compressedFiles.update(current => {
+    this.compressedFiles.update((current) => {
       const updated = [...current];
       updated.splice(index, 1);
       return updated;
@@ -118,7 +118,7 @@ export class App {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   }
 
   getImagePreview(file: File): SafeUrl {
@@ -132,8 +132,8 @@ export class App {
       const options: Options = {
         maxSizeMB: this.maxSizeMb(),
         useWebWorker: true,
-        initialQuality: this.initialQuality() / 100
-      }
+        initialQuality: this.initialQuality() / 100,
+      };
       const compressionPromises = this.files().map(async (imageFile) => {
         const compressedFile = await imageCompression(imageFile, options);
         return compressedFile;
@@ -142,8 +142,7 @@ export class App {
       this.compressedFiles.set(compressed);
     } catch (error) {
       console.log(error);
-    }
-    finally {
+    } finally {
       this.isProcessing.set(false);
     }
   }
@@ -155,14 +154,14 @@ export class App {
     a.download = file.name;
     a.click();
 
-    setTimeout(() => URL.revokeObjectURL(url), 0)
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   async downloadAll() {
     if (this.compressedFiles().length === 0) return;
     try {
       const zip = new JSZip();
-      this.compressedFiles().forEach((file, index) => {
+      this.compressedFiles().forEach((file) => {
         zip.file(file.name, file);
       });
       const zipBlob = await zip.generateAsync({ type: 'blob' });
@@ -174,10 +173,15 @@ export class App {
       a.download = 'compressed-images.zip';
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 0);
-    }
-    catch (ex) {
+    } catch (ex) {
       console.log(ex);
     }
+  }
 
+  onKeyDown(event: KeyboardEvent, fileInput: HTMLInputElement): void {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault(); // Prevent space from scrolling the page
+      fileInput.click();
+    }
   }
 }

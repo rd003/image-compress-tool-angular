@@ -8,6 +8,7 @@ import imageCompression, { Options } from 'browser-image-compression';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import JSZip from 'jszip';
 import { MatSliderModule } from '@angular/material/slider';
+import { Footer } from "./footer";
 
 @Component({
   selector: 'app-root',
@@ -17,7 +18,8 @@ import { MatSliderModule } from '@angular/material/slider';
     MatButtonModule,
     MatIconModule,
     MatListModule,
-    MatChipsModule
+    MatChipsModule,
+    Footer
   ],
   templateUrl: './app.html',
   styleUrl: 'app.css',

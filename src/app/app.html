@@ -42,8 +42,10 @@
                             <div class="file-thumbnail">
                                 <img [src]="getImagePreview(file)" />
                             </div>
-                            <div class="file-name">{{file.name}}</div>
-                            <div class="file-size">{{formatFileSize(file.size)}}</div>
+                            <div class="file-detail">
+                                <div class="file-name">{{file.name}}</div>
+                                <div class="file-size">{{formatFileSize(file.size)}}</div>
+                            </div>
                         </div>
                         <button mat-icon-button matListItemMeta (click)="removeFile($index)" color="warn">
                             <mat-icon>close</mat-icon>
@@ -78,11 +80,13 @@
                             <div class="file-thumbnail">
                                 <img [src]="getImagePreview(file)" />
                             </div>
-                            <div class="file-name">{{file.name}}</div>
-                            <div class="file-size">{{formatFileSize(file.size)}}</div>
-                            <button mat-raised-button color="secondary" (click)="downloadFile(file)">
-                                <mat-icon>download</mat-icon> Download
-                            </button>
+                            <div class="file-detail">
+                                <div class="file-name">{{file.name}}</div>
+                                <div class="file-size">{{formatFileSize(file.size)}}</div>
+                                <a class="img-download-link" (click)="downloadFile(file)">
+                                    Download
+                                </a>
+                            </div>
                         </div>
                         <button mat-icon-button matListItemMeta (click)="removeCompressedFile($index)" color="warn">
                             <mat-icon>close</mat-icon>
@@ -106,8 +110,5 @@
         </mat-card-content>
     </mat-card>
 
-    <div class="footer">
-        Created by <a target="_blank" href="https://x.com/ravi_devrani">Ravindra Devrani</a> with angular and <a
-            target="_blank" href="https://github.com/Donaldcwl/browser-image-compression">browser-image-compression</a>
-    </div>
+    <app-footer />
 </div>
